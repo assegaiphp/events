@@ -1,27 +1,38 @@
 {
-    "name": "assegaiphp/events",
-    "description": "A simple library that brings event handling to the AssegaiPHP framework.",
-    "type": "library",
-    "require-dev": {
-        "pestphp/pest": "^4.4",
-        "phpstan/phpstan": "^2.1"
-    },
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Assegaiphp\\Events\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Andrew Masiye",
-            "email": "amasiye313@gmail.com"
-        }
-    ],
-    "require": {},
-    "config": {
-        "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
+  "name": "assegaiphp/events",
+  "description": "A lightweight event emitter package for AssegaiPHP and standalone PHP applications.",
+  "type": "library",
+  "license": "MIT",
+  "keywords": ["events", "event-emitter", "observer", "assegai"],
+  "require": {
+    "php": ">=8.3"
+  },
+  "suggest": {
+    "assegaiphp/core": "Adds the Assegai module bridge so event listeners can be auto-registered from providers."
+  },
+  "require-dev": {
+    "pestphp/pest": "^4.4",
+    "phpstan/phpstan": "^2.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Assegai\\Events\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Andrew Masiye",
+      "email": "amasiye313@gmail.com"
+    }
+  ],
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  }
 }
