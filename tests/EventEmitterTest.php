@@ -1,9 +1,12 @@
 <?php
-
 use Assegai\Events\Attributes\OnEvent;
 use Assegai\Events\EventEmitter;
 use Assegai\Events\EventEmitterConfig;
+use Assegai\Events\EventListenerFailure;
 use Assegai\Events\EventEmitterReadinessWatcher;
+use Assegai\Events\Interfaces\OutboxStoreInterface;
+use Assegai\Events\Outbox\OutboxMessage;
+use Assegai\Events\Outbox\OutboxRecorder;
 use Assegai\Events\ReflectiveListenerProvider;
 
 it('emits exact named events', function (): void {
@@ -143,6 +146,39 @@ it('honors suppressErrors on OnEvent attributes', function (): void {
   expect($listener->afterFailureWasReached)->toBeTrue();
 });
 
+it('captures listener failures with failure hooks', function (): void {
+  $emitter = new EventEmitter();
+  $failures = [];
+
+  $emitter->onFailure(function (EventListenerFailure $failure) use (&$failures): void {
+    $failures[] = $failure;
+  });
+
+  $emitter->on('orders.failed', function (): void {
+    throw new RuntimeException('Listener exploded.');
+  });
+
+  expect(fn () => $emitter->emit('orders.failed'))
+    ->toThrow(RuntimeException::class, 'Listener exploded.');
+
+  expect($failures)->toHaveCount(1)
+    ->and($failures[0]->eventName)->toBe('orders.failed')
+    ->and($failures[0]->suppressed)->toBeFalse();
+});
+
+it('does not duplicate reflective listener registrations for the same instance', function (): void {
+  $emitter = new EventEmitter();
+  $provider = new ReflectiveListenerProvider($emitter);
+  $listener = new OrderListener();
+
+  $provider->register($listener);
+  $provider->register($listener);
+
+  $emitter->emit('orders.created', ['orderId' => 9]);
+
+  expect($listener->received)->toBe(['named:9']);
+});
+
 it('enforces the configured listener limit', function (): void {
   $emitter = new EventEmitter(new EventEmitterConfig(maxListeners: 1));
 
@@ -159,6 +195,30 @@ it('can wait for readiness', function (): void {
   $watcher->waitUntilReady(5);
 
   expect($watcher->isReady())->toBeTrue();
+});
+
+it('can record durable events into an outbox store', function (): void {
+  $collector = new \ArrayObject();
+  $store = new class($collector) implements OutboxStoreInterface {
+    public function __construct(
+      private \ArrayObject $collector,
+    )
+    {
+    }
+
+    public function append(OutboxMessage $message): void
+    {
+      $this->collector->append($message);
+    }
+  };
+
+  $outbox = new OutboxRecorder($store);
+  $message = $outbox->record('orders.created', ['orderId' => 42], ['source' => 'tests']);
+
+  expect($collector)->toHaveCount(1)
+    ->and($collector[0])->toBe($message)
+    ->and($message->eventName)->toBe('orders.created')
+    ->and($message->payload)->toBe(['orderId' => 42]);
 });
 
 final readonly class OrderCreated

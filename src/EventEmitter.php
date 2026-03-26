@@ -2,6 +2,7 @@
 
 namespace Assegai\Events;
 
+use Assegai\Events\Interfaces\EventFailureHandlerInterface;
 use Assegai\Events\Interfaces\EventEmitterInterface;
 use Assegai\Events\Support\EventNameResolver;
 use ReflectionFunction;
@@ -14,6 +15,11 @@ class EventEmitter implements EventEmitterInterface
    * @var array<string, array<int, ListenerDefinition>>
    */
   private array $listeners = [];
+
+  /**
+   * @var array<int, callable|EventFailureHandlerInterface>
+   */
+  private array $failureHandlers = [];
 
   public function __construct(
     private readonly EventEmitterConfig $config = new EventEmitterConfig(),
@@ -41,6 +47,13 @@ class EventEmitter implements EventEmitterInterface
     return $this;
   }
 
+  public function onFailure(callable|EventFailureHandlerInterface $handler): static
+  {
+    $this->failureHandlers[] = $handler;
+
+    return $this;
+  }
+
   public function off(string $event, callable $listener): void
   {
     if (!isset($this->listeners[$event])) {
@@ -64,6 +77,11 @@ class EventEmitter implements EventEmitterInterface
     }
   }
 
+  public function clearFailureHandlers(): void
+  {
+    $this->failureHandlers = [];
+  }
+
   public function emit(string|object $event, mixed $payload = null): array
   {
     $eventName = EventNameResolver::resolve($event);
@@ -81,6 +99,20 @@ class EventEmitter implements EventEmitterInterface
           eventObject: $eventObject,
         );
       } catch (\Throwable $throwable) {
+        $this->dispatchFailure(
+          new EventListenerFailure(
+            eventName: $eventName,
+            registeredEvent: $definition->event,
+            listener: $definition->listener,
+            listenerId: $this->listenerId($definition->listener),
+            throwable: $throwable,
+            primaryArgument: $primaryArgument,
+            eventObject: $eventObject,
+            suppressed: $definition->suppressErrors,
+            once: $definition->once,
+          ),
+        );
+
         if (! $definition->suppressErrors) {
           throw $throwable;
         }
@@ -230,6 +262,22 @@ class EventEmitter implements EventEmitterInterface
     }
 
     return new ReflectionFunction($listener);
+  }
+
+  private function dispatchFailure(EventListenerFailure $failure): void
+  {
+    foreach ($this->failureHandlers as $handler) {
+      try {
+        if ($handler instanceof EventFailureHandlerInterface) {
+          $handler->handle($failure);
+          continue;
+        }
+
+        $handler($failure);
+      } catch (\Throwable) {
+        // Failure hooks are observational. They must not mask the original listener failure.
+      }
+    }
   }
 
   private function removeMatchingDefinition(ListenerDefinition $target): void

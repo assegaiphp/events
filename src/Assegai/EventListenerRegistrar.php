@@ -15,6 +15,7 @@ use ReflectionException;
 class EventListenerRegistrar implements OnApplicationBootstrapInterface
 {
   private readonly ReflectiveListenerProvider $listenerProvider;
+  private bool $bootstrapped = false;
 
   public function __construct(
     private readonly AssegaiEventEmitter $eventEmitter,
@@ -28,6 +29,11 @@ class EventListenerRegistrar implements OnApplicationBootstrapInterface
 
   public function onApplicationBootstrap(): void
   {
+    if ($this->bootstrapped) {
+      $this->readinessWatcher->markReady();
+      return;
+    }
+
     foreach (array_keys($this->moduleManager->getProviderTokens()) as $providerClass) {
       if ($providerClass === self::class) {
         continue;
@@ -52,6 +58,7 @@ class EventListenerRegistrar implements OnApplicationBootstrapInterface
       $this->listenerProvider->register($instance);
     }
 
+    $this->bootstrapped = true;
     $this->readinessWatcher->markReady();
   }
 }

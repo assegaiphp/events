@@ -8,7 +8,9 @@
     "php": ">=8.3"
   },
   "suggest": {
-    "assegaiphp/core": "Adds the Assegai module bridge so event listeners can be auto-registered from providers."
+    "assegaiphp/core": "Adds the Assegai module bridge so event listeners can be auto-registered from providers.",
+    "assegaiphp/orm": "Adds the ORM-backed outbox store and event_outbox bridge for durable event recording.",
+    "assegaiphp/rabbitmq": "Provides a ready-made durable queue target for relayed outbox messages."
   },
   "require-dev": {
     "pestphp/pest": "^4.4",
