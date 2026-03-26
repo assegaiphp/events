@@ -33,6 +33,42 @@ it('supports once listeners', function (): void {
   expect($calls)->toBe(1);
 });
 
+it('supports invokable object listeners', function (): void {
+  $emitter = new EventEmitter();
+  $listener = new class {
+    /**
+     * @var array<int, int>
+     */
+    public array $received = [];
+
+    public function __invoke(array $payload): void
+    {
+      $this->received[] = $payload['orderId'];
+    }
+  };
+
+  $emitter->on('orders.created', $listener);
+  $emitter->emit('orders.created', ['orderId' => 55]);
+
+  expect($listener->received)->toBe([55]);
+});
+
+it('removes only the once registration when the same callable is also persistent', function (): void {
+  $emitter = new EventEmitter();
+  $calls = 0;
+  $listener = function () use (&$calls): void {
+    $calls++;
+  };
+
+  $emitter->on('orders.created', $listener);
+  $emitter->once('orders.created', $listener);
+
+  $emitter->emit('orders.created');
+  $emitter->emit('orders.created');
+
+  expect($calls)->toBe(3);
+});
+
 it('orders listeners by priority', function (): void {
   $emitter = new EventEmitter();
   $calls = [];
@@ -96,6 +132,17 @@ it('can register listener classes with OnEvent attributes', function (): void {
   ]);
 });
 
+it('honors suppressErrors on OnEvent attributes', function (): void {
+  $emitter = new EventEmitter();
+  $provider = new ReflectiveListenerProvider($emitter);
+  $listener = new SuppressedOrderListener();
+
+  $provider->register($listener);
+  $emitter->emit('orders.failed');
+
+  expect($listener->afterFailureWasReached)->toBeTrue();
+});
+
 it('enforces the configured listener limit', function (): void {
   $emitter = new EventEmitter(new EventEmitterConfig(maxListeners: 1));
 
@@ -140,5 +187,22 @@ final class OrderListener
   public function onObjectEvent(OrderCreated $event): void
   {
     $this->received[] = 'object:' . $event->orderId;
+  }
+}
+
+final class SuppressedOrderListener
+{
+  public bool $afterFailureWasReached = false;
+
+  #[OnEvent('orders.failed', suppressErrors: true)]
+  public function failSilently(): void
+  {
+    throw new RuntimeException('Ignore this listener failure.');
+  }
+
+  #[OnEvent('orders.failed')]
+  public function afterFailure(): void
+  {
+    $this->afterFailureWasReached = true;
   }
 }

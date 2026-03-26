@@ -21,21 +21,21 @@ class EventEmitter implements EventEmitterInterface
   {
   }
 
-  public function on(string $event, callable $listener, int $priority = 0): static
+  public function on(string $event, callable $listener, int $priority = 0, bool $suppressErrors = false): static
   {
     $this->guardListenerLimit($event);
     $this->listeners[$event] ??= [];
-    $this->listeners[$event][] = new ListenerDefinition($event, $listener, $priority, false);
+    $this->listeners[$event][] = new ListenerDefinition($event, $listener, $priority, false, $suppressErrors);
     $this->sortListeners($event);
 
     return $this;
   }
 
-  public function once(string $event, callable $listener, int $priority = 0): static
+  public function once(string $event, callable $listener, int $priority = 0, bool $suppressErrors = false): static
   {
     $this->guardListenerLimit($event);
     $this->listeners[$event] ??= [];
-    $this->listeners[$event][] = new ListenerDefinition($event, $listener, $priority, true);
+    $this->listeners[$event][] = new ListenerDefinition($event, $listener, $priority, true, $suppressErrors);
     $this->sortListeners($event);
 
     return $this;
@@ -48,10 +48,16 @@ class EventEmitter implements EventEmitterInterface
     }
 
     $listenerId = $this->listenerId($listener);
-    $this->listeners[$event] = array_values(array_filter(
-      $this->listeners[$event],
-      fn (ListenerDefinition $definition): bool => $this->listenerId($definition->listener) !== $listenerId,
-    ));
+
+    foreach ($this->listeners[$event] as $index => $definition) {
+      if ($this->listenerId($definition->listener) !== $listenerId) {
+        continue;
+      }
+
+      unset($this->listeners[$event][$index]);
+      $this->listeners[$event] = array_values($this->listeners[$event]);
+      break;
+    }
 
     if ($this->listeners[$event] === []) {
       unset($this->listeners[$event]);
@@ -81,7 +87,7 @@ class EventEmitter implements EventEmitterInterface
       }
 
       if ($definition->once) {
-        $this->off($definition->event, $definition->listener);
+        $this->removeMatchingDefinition($definition);
       }
     }
 
@@ -176,6 +182,10 @@ class EventEmitter implements EventEmitterInterface
       return spl_object_hash($listener);
     }
 
+    if (is_object($listener)) {
+      return spl_object_hash($listener) . '::__invoke';
+    }
+
     return (string) $listener;
   }
 
@@ -215,6 +225,31 @@ class EventEmitter implements EventEmitterInterface
       return new ReflectionMethod($className, $method);
     }
 
+    if (is_object($listener) && !($listener instanceof \Closure)) {
+      return new ReflectionMethod($listener, '__invoke');
+    }
+
     return new ReflectionFunction($listener);
+  }
+
+  private function removeMatchingDefinition(ListenerDefinition $target): void
+  {
+    if (!isset($this->listeners[$target->event])) {
+      return;
+    }
+
+    foreach ($this->listeners[$target->event] as $index => $definition) {
+      if ($definition !== $target) {
+        continue;
+      }
+
+      unset($this->listeners[$target->event][$index]);
+      $this->listeners[$target->event] = array_values($this->listeners[$target->event]);
+      break;
+    }
+
+    if ($this->listeners[$target->event] === []) {
+      unset($this->listeners[$target->event]);
+    }
   }
 }

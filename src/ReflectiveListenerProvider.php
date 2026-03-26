@@ -35,11 +35,11 @@ class ReflectiveListenerProvider implements ListenerProviderInterface
 
         foreach ($events as $eventName) {
           if ($metadata->once) {
-            $this->emitter->once($eventName, [$listener, $method->getName()], $metadata->priority);
+            $this->emitter->once($eventName, [$listener, $method->getName()], $metadata->priority, $metadata->suppressErrors);
             continue;
           }
 
-          $this->emitter->on($eventName, [$listener, $method->getName()], $metadata->priority);
+          $this->emitter->on($eventName, [$listener, $method->getName()], $metadata->priority, $metadata->suppressErrors);
         }
       }
     }
