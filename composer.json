@@ -1,0 +1,27 @@
+{
+    "name": "assegaiphp/events",
+    "description": "A simple library that brings event handling to the AssegaiPHP framework.",
+    "type": "library",
+    "require-dev": {
+        "pestphp/pest": "^4.4",
+        "phpstan/phpstan": "^2.1"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Assegaiphp\\Events\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Andrew Masiye",
+            "email": "amasiye313@gmail.com"
+        }
+    ],
+    "require": {},
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
