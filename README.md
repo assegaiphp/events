@@ -20,7 +20,7 @@ It is intentionally framework-light:
 composer require assegaiphp/events
 ```
 
-For Assegai projects, the CLI shortcut will be:
+For Assegai projects, the CLI shortcut is:
 
 ```bash
 assegai add events
