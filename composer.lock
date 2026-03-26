@@ -4,8 +4,55 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "db132006f8e2d667cdf8692b9b625bf2",
-    "packages": [],
+    "content-hash": "5392ad9bcf9c8da2d05dd850aed99272",
+    "packages": [
+        {
+            "name": "assegaiphp/collections",
+            "version": "0.3.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/assegaiphp/collections.git",
+                "reference": "b41affabc18515e365a65193bdc0b3c2fc5e52df"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/assegaiphp/collections/zipball/b41affabc18515e365a65193bdc0b3c2fc5e52df",
+                "reference": "b41affabc18515e365a65193bdc0b3c2fc5e52df",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.3"
+            },
+            "require-dev": {
+                "pestphp/pest": "^4.4"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/Util/Functions.php"
+                ],
+                "psr-4": {
+                    "Assegai\\Collections\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andrew Masiye",
+                    "email": "andrew.masiye@assegaiphp.com"
+                }
+            ],
+            "description": "The assegaiphp/collections package is a powerful tool for creating and managing groups of related objects in your AssegaiPHP projects. With this library, you can easily organize and manipulate data in a variety of ways, such as arrays, lists, sets, and maps. The package offers a wide range of methods for adding, removing, and manipulating items, as well as sorting, searching, and filtering your collections. It is fully compatible with PHP 7.x and above and is designed to be lightweight and easy to use. Whether you're building a web application, a CLI tool, or a standalone script, assegaiphp/collections is the perfect choice for working with data. With its simple and intuitive interface, you can easily start working with collections in your project right away.",
+            "support": {
+                "issues": "https://github.com/assegaiphp/collections/issues",
+                "source": "https://github.com/assegaiphp/collections/tree/0.3.5"
+            },
+            "time": "2026-03-15T03:26:10+00:00"
+        }
+    ],
     "packages-dev": [
         {
             "name": "brianium/paratest",

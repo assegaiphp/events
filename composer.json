@@ -18,7 +18,9 @@
             "email": "amasiye313@gmail.com"
         }
     ],
-    "require": {},
+    "require": {
+        "assegaiphp/collections": "^0.3.5"
+    },
     "config": {
         "allow-plugins": {
             "pestphp/pest-plugin": true
