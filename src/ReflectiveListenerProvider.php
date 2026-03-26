@@ -10,6 +10,11 @@ use ReflectionMethod;
 
 class ReflectiveListenerProvider implements ListenerProviderInterface
 {
+  /**
+   * @var array<string, true>
+   */
+  private array $registeredListeners = [];
+
   public function __construct(
     private readonly EventEmitterInterface $emitter,
   )
@@ -34,14 +39,27 @@ class ReflectiveListenerProvider implements ListenerProviderInterface
         $events = is_array($metadata->event) ? $metadata->event : [$metadata->event];
 
         foreach ($events as $eventName) {
+          $registrationKey = $this->registrationKey($listener, $method, $eventName, $metadata->once);
+
+          if (isset($this->registeredListeners[$registrationKey])) {
+            continue;
+          }
+
           if ($metadata->once) {
             $this->emitter->once($eventName, [$listener, $method->getName()], $metadata->priority, $metadata->suppressErrors);
+            $this->registeredListeners[$registrationKey] = true;
             continue;
           }
 
           $this->emitter->on($eventName, [$listener, $method->getName()], $metadata->priority, $metadata->suppressErrors);
+          $this->registeredListeners[$registrationKey] = true;
         }
       }
     }
+  }
+
+  private function registrationKey(object $listener, ReflectionMethod $method, string $eventName, bool $once): string
+  {
+    return spl_object_hash($listener) . '::' . $method->getName() . '@' . $eventName . '#once:' . ($once ? '1' : '0');
   }
 }

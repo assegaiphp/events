@@ -13,6 +13,8 @@ It is intentionally framework-light:
 - register listener classes with `#[OnEvent(...)]`
 - use wildcard listeners such as `orders.*`
 - auto-register `#[OnEvent(...)]` listeners in Assegai modules through `EventsModule`
+- observe listener failures with failure hooks
+- record durable events into an outbox store when in-process delivery is not enough
 
 ## Install
 
@@ -160,6 +162,131 @@ $events = new EventEmitter();
 $provider = new ReflectiveListenerProvider($events);
 $provider->register(new OrderListener());
 ```
+
+Registering the same listener instance more than once through the reflective provider is safe. Duplicate method registrations for the same object instance are ignored.
+
+## Failure hooks
+
+By default, listener exceptions bubble up unless a listener is registered with `suppressErrors: true`.
+
+If you want logging, metrics, or alerts around listener failures, attach a failure hook:
+
+```php
+use Assegai\Events\EventEmitter;
+use Assegai\Events\EventListenerFailure;
+
+$events = new EventEmitter();
+
+$events->onFailure(function (EventListenerFailure $failure): void {
+  error_log(sprintf(
+    'Event listener failed for %s (%s): %s',
+    $failure->eventName,
+    $failure->listenerId,
+    $failure->throwable->getMessage(),
+  ));
+});
+```
+
+Failure hooks are observational. They run when a listener throws, but they do not replace the normal exception policy.
+
+## Durable delivery with an outbox
+
+This package stays synchronous and in-process on purpose. If the work must survive process restarts or be retried later, record a durable event and let a relay publish it to a queue or broker.
+
+The generic durable seam is `DurableOutboxStoreInterface`:
+
+```php
+use Assegai\Events\Interfaces\DurableOutboxStoreInterface;
+use Assegai\Events\Outbox\OutboxMessage;
+use Assegai\Events\Outbox\OutboxRecorder;
+use DateTimeImmutable;
+use Throwable;
+
+final class DatabaseOutboxStore implements DurableOutboxStoreInterface
+{
+  public function append(OutboxMessage $message): void
+  {
+    // persist to a database table, message log, or transactional outbox
+  }
+
+  public function leasePending(int $limit = 100, ?DateTimeImmutable $now = null): array
+  {
+    return [];
+  }
+
+  public function markDispatched(string|int $id, ?DateTimeImmutable $dispatchedAt = null): void
+  {
+  }
+
+  public function markFailed(string|int $id, string|Throwable $error, ?DateTimeImmutable $retryAt = null): void
+  {
+  }
+}
+
+$outbox = new OutboxRecorder(new DatabaseOutboxStore());
+$outbox->record('orders.created', ['orderId' => 42], ['source' => 'checkout']);
+```
+
+For Assegai projects there is also a ready-made bridge:
+
+- `EventsOutboxModule`
+- `OrmOutboxStore`
+- `AssegaiOutboxRelayService`
+
+```php
+use Assegai\Core\Attributes\Modules\Module;
+use Assegai\Core\Consumers\MiddlewareConsumer;
+use Assegai\Core\Interfaces\AssegaiModuleInterface;
+use Assegai\Events\Assegai\Outbox\EventsOutboxModule;
+
+#[Module(
+  imports: [EventsOutboxModule::class],
+)]
+final class AppModule implements AssegaiModuleInterface
+{
+  public function configure(MiddlewareConsumer $consumer): void
+  {
+  }
+}
+```
+
+Relay configuration lives in `assegai.json`:
+
+```json
+{
+  "events": {
+    "outbox": {
+      "queue": "rabbitmq.events",
+      "batchSize": 100,
+      "retryDelaySeconds": 60
+    }
+  }
+}
+```
+
+Then drain the outbox onto the configured queue connection:
+
+```php
+use Assegai\Core\Attributes\Injectable;
+use Assegai\Events\Assegai\Outbox\AssegaiOutboxRelayService;
+
+#[Injectable]
+final class OutboxDrainService
+{
+  public function __construct(
+    private readonly AssegaiOutboxRelayService $relay,
+  )
+  {
+  }
+
+  public function flush(): void
+  {
+    $this->relay->relayPending();
+  }
+}
+```
+
+One important boundary: the ORM-backed store gives you a real durable table and relay flow, but strict single-transaction outbox guarantees still depend on how your application manages database transactions. If you need the domain write and outbox append to share the exact same transaction, construct the store around a repository or manager that participates in that same unit of work.
 
 ## Notes
 
