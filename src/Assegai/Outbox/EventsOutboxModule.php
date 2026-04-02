@@ -6,10 +6,12 @@ use Assegai\Core\Attributes\Modules\Module;
 use Assegai\Core\Consumers\MiddlewareConsumer;
 use Assegai\Core\Interfaces\AssegaiModuleInterface;
 use Assegai\Events\Assegai\EventsModule;
+use Assegai\Orm\Assegai\OrmModule;
 
 #[Module(
   imports: [
     EventsModule::class,
+    OrmModule::class,
   ],
   providers: [
     OrmOutboxStore::class,
