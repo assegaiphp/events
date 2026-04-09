@@ -2,6 +2,14 @@
     <a href="https://assegaiphp.com/" target="blank"><img src="https://assegaiphp.com/images/logos/logo-cropped.png" width="200" alt="Assegai Logo"></a>
 </div>
 
+<p align="center">
+  <a href="https://github.com/assegaiphp/events/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/assegaiphp/events?display_name=tag&sort=semver&style=flat-square"></a>
+  <a href="https://github.com/assegaiphp/events/actions/workflows/php.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/assegaiphp/events/php.yml?branch=main&label=tests&style=flat-square"></a>
+  <img alt="PHP 8.3+" src="https://img.shields.io/badge/PHP-8.3%2B-777BB4?style=flat-square&logo=php&logoColor=white">
+  <a href="https://github.com/assegaiphp/events/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/assegaiphp/events?style=flat-square"></a>
+  <img alt="Status active" src="https://img.shields.io/badge/status-active-10b981?style=flat-square">
+</p>
+
 # Assegai Events
 
 `assegaiphp/events` is a small event emitter package for both AssegaiPHP projects and standalone PHP applications.
@@ -16,6 +24,14 @@ It is intentionally framework-light:
 - observe listener failures with failure hooks
 - record durable events into an outbox store when in-process delivery is not enough
 
+## Contribution workflow
+
+For commit and pull request conventions in this repo, see:
+
+- [docs/commit-and-pr-guidelines.md](./docs/commit-and-pr-guidelines.md)
+
+For package maintenance, `composer test` exercises the standalone package surface. `composer test:integration` runs the optional Assegai and ORM bridge coverage when those packages are installed.
+
 ## Install
 
 ```bash
@@ -28,17 +44,19 @@ For Assegai projects, the CLI shortcut is:
 assegai add events
 ```
 
+The standalone emitter lives under `Assegai\Events\...`. The optional Assegai bridge now lives under `Assegai\Events\Bridge\...`. The older `Assegai\Events\Assegai\...` namespace still works as a compatibility alias, but `Bridge` is the preferred path going forward.
+
 ## Assegai usage
 
-Import the events module once, then inject the emitter into your services and declare listeners with `#[OnEvent(...)]`.
+Import the optional Assegai bridge module once, then inject the emitter into your services and declare listeners with `#[OnEvent(...)]`.
 
 ```php
 use Assegai\Core\Attributes\Injectable;
 use Assegai\Core\Attributes\Modules\Module;
 use Assegai\Core\Consumers\MiddlewareConsumer;
 use Assegai\Core\Interfaces\AssegaiModuleInterface;
-use Assegai\Events\Assegai\AssegaiEventEmitter;
-use Assegai\Events\Assegai\EventsModule;
+use Assegai\Events\Bridge\AssegaiEventEmitter;
+use Assegai\Events\Bridge\EventsModule;
 use Assegai\Events\Attributes\OnEvent;
 
 #[Injectable]
@@ -83,7 +101,7 @@ By default, the Assegai bridge registers `#[OnEvent(...)]` listeners during appl
 If you need to delay an early emit until listener registration has completed, inject the readiness watcher and wait for it:
 
 ```php
-use Assegai\Events\Assegai\EventEmitterReadinessWatcherProvider;
+use Assegai\Events\Bridge\EventEmitterReadinessWatcherProvider;
 
 public function __construct(
   private readonly EventEmitterReadinessWatcherProvider $eventsReady,
@@ -237,7 +255,7 @@ For Assegai projects there is also a ready-made bridge:
 use Assegai\Core\Attributes\Modules\Module;
 use Assegai\Core\Consumers\MiddlewareConsumer;
 use Assegai\Core\Interfaces\AssegaiModuleInterface;
-use Assegai\Events\Assegai\Outbox\EventsOutboxModule;
+use Assegai\Events\Bridge\Outbox\EventsOutboxModule;
 
 #[Module(
   imports: [EventsOutboxModule::class],
@@ -268,7 +286,7 @@ Then drain the outbox onto the configured queue connection:
 
 ```php
 use Assegai\Core\Attributes\Injectable;
-use Assegai\Events\Assegai\Outbox\AssegaiOutboxRelayService;
+use Assegai\Events\Bridge\Outbox\AssegaiOutboxRelayService;
 
 #[Injectable]
 final class OutboxDrainService

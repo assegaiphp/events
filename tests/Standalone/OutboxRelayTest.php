@@ -1,7 +1,6 @@
 <?php
 
-use Assegai\Common\Interfaces\Queues\QueueInterface;
-use Assegai\Common\Interfaces\Queues\QueueProcessResultInterface;
+use Assegai\Events\Interfaces\QueuePublisherInterface;
 use Assegai\Events\Interfaces\DurableOutboxStoreInterface;
 use Assegai\Events\Outbox\OutboxDeliveryStatus;
 use Assegai\Events\Outbox\OutboxMessage;
@@ -137,7 +136,7 @@ final class InMemoryDurableOutboxStore implements DurableOutboxStoreInterface
   }
 }
 
-final class InMemoryQueue implements QueueInterface
+final class InMemoryQueue implements QueuePublisherInterface
 {
   /**
    * @var object[]
@@ -159,52 +158,7 @@ final class InMemoryQueue implements QueueInterface
     $this->jobs[] = $job;
   }
 
-  public function process(callable $callback): QueueProcessResultInterface
-  {
-    return new class implements QueueProcessResultInterface {
-      public function getData(): mixed
-      {
-        return null;
-      }
-
-      public function isOk(): bool
-      {
-        return true;
-      }
-
-      public function isError(): bool
-      {
-        return false;
-      }
-
-      public function getErrors(): array
-      {
-        return [];
-      }
-
-      public function getNextError(): ?Throwable
-      {
-        return null;
-      }
-
-      public function getJob(): ?object
-      {
-        return null;
-      }
-    };
-  }
-
-  public function getName(): string
-  {
-    return 'in-memory';
-  }
-
-  public function getTotalJobs(): int
-  {
-    return count($this->jobs);
-  }
-
-  public static function create(array $config): QueueInterface
+  public static function create(array $config): self
   {
     return new self();
   }

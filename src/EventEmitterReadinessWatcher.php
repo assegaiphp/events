@@ -2,7 +2,7 @@
 
 namespace Assegai\Events;
 
-use RuntimeException;
+use Assegai\Events\Exceptions\EventEmitterNotReadyException;
 
 class EventEmitterReadinessWatcher
 {
@@ -32,7 +32,7 @@ class EventEmitterReadinessWatcher
     }
 
     if (! $this->ready) {
-      throw new RuntimeException('The event emitter is not ready yet.');
+      throw new EventEmitterNotReadyException();
     }
   }
 }

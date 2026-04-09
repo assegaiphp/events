@@ -3,12 +3,18 @@
   "description": "A lightweight event emitter package for AssegaiPHP and standalone PHP applications.",
   "type": "library",
   "license": "MIT",
-  "keywords": ["events", "event-emitter", "observer", "assegai"],
+  "keywords": [
+    "events",
+    "event-emitter",
+    "observer",
+    "assegai"
+  ],
   "require": {
     "php": ">=8.3"
   },
   "suggest": {
     "assegaiphp/core": "Adds the Assegai module bridge so event listeners can be auto-registered from providers.",
+    "assegaiphp/console": "Optional: enables Assegai CLI installers for package wiring.",
     "assegaiphp/orm": "Adds the ORM-backed outbox store and event_outbox bridge for durable event recording.",
     "assegaiphp/rabbitmq": "Provides a ready-made durable queue target for relayed outbox messages."
   },
@@ -35,6 +41,31 @@
   "config": {
     "allow-plugins": {
       "pestphp/pest-plugin": true
+    },
+    "platform": {
+      "php": "8.3.0"
     }
+  },
+  "extra": {
+    "assegai": {
+      "aliases": [
+        "events"
+      ],
+      "installer": "Assegai\\Events\\Bridge\\Console\\EventsPackageInstaller"
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/pest tests/Standalone",
+    "test:standalone": "@test",
+    "test:assegai": "@php tests/bin/run-optional-suite.php tests/Integration/Assegai 'Assegai\\Core\\Injector' 'Assegai\\Core\\ModuleManager'",
+    "test:outbox": "@php tests/bin/run-optional-suite.php tests/Integration/Outbox 'Assegai\\Core\\Config' 'Assegai\\Orm\\DataSource\\DataSource'",
+    "test:integration": [
+      "@test:assegai",
+      "@test:outbox"
+    ],
+    "test:all": [
+      "@test:standalone",
+      "@test:integration"
+    ]
   }
 }
