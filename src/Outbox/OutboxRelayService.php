@@ -2,8 +2,8 @@
 
 namespace Assegai\Events\Outbox;
 
-use Assegai\Common\Interfaces\Queues\QueueInterface;
 use Assegai\Events\Interfaces\DurableOutboxStoreInterface;
+use Assegai\Events\Interfaces\QueuePublisherInterface;
 use DateTimeImmutable;
 use Throwable;
 
@@ -11,7 +11,7 @@ final readonly class OutboxRelayService
 {
   public function __construct(
     private DurableOutboxStoreInterface $store,
-    private QueueInterface $queue,
+    private QueuePublisherInterface $queue,
     private OutboxRelayConfig $config = new OutboxRelayConfig(),
   )
   {

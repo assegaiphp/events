@@ -30,6 +30,8 @@ For commit and pull request conventions in this repo, see:
 
 - [docs/commit-and-pr-guidelines.md](./docs/commit-and-pr-guidelines.md)
 
+For package maintenance, `composer test` exercises the standalone package surface. `composer test:integration` runs the optional Assegai and ORM bridge coverage when those packages are installed.
+
 ## Install
 
 ```bash
@@ -42,17 +44,19 @@ For Assegai projects, the CLI shortcut is:
 assegai add events
 ```
 
+The standalone emitter lives under `Assegai\Events\...`. The optional Assegai bridge now lives under `Assegai\Events\Bridge\...`. The older `Assegai\Events\Assegai\...` namespace still works as a compatibility alias, but `Bridge` is the preferred path going forward.
+
 ## Assegai usage
 
-Import the events module once, then inject the emitter into your services and declare listeners with `#[OnEvent(...)]`.
+Import the optional Assegai bridge module once, then inject the emitter into your services and declare listeners with `#[OnEvent(...)]`.
 
 ```php
 use Assegai\Core\Attributes\Injectable;
 use Assegai\Core\Attributes\Modules\Module;
 use Assegai\Core\Consumers\MiddlewareConsumer;
 use Assegai\Core\Interfaces\AssegaiModuleInterface;
-use Assegai\Events\Assegai\AssegaiEventEmitter;
-use Assegai\Events\Assegai\EventsModule;
+use Assegai\Events\Bridge\AssegaiEventEmitter;
+use Assegai\Events\Bridge\EventsModule;
 use Assegai\Events\Attributes\OnEvent;
 
 #[Injectable]
@@ -97,7 +101,7 @@ By default, the Assegai bridge registers `#[OnEvent(...)]` listeners during appl
 If you need to delay an early emit until listener registration has completed, inject the readiness watcher and wait for it:
 
 ```php
-use Assegai\Events\Assegai\EventEmitterReadinessWatcherProvider;
+use Assegai\Events\Bridge\EventEmitterReadinessWatcherProvider;
 
 public function __construct(
   private readonly EventEmitterReadinessWatcherProvider $eventsReady,
@@ -251,7 +255,7 @@ For Assegai projects there is also a ready-made bridge:
 use Assegai\Core\Attributes\Modules\Module;
 use Assegai\Core\Consumers\MiddlewareConsumer;
 use Assegai\Core\Interfaces\AssegaiModuleInterface;
-use Assegai\Events\Assegai\Outbox\EventsOutboxModule;
+use Assegai\Events\Bridge\Outbox\EventsOutboxModule;
 
 #[Module(
   imports: [EventsOutboxModule::class],
@@ -282,7 +286,7 @@ Then drain the outbox onto the configured queue connection:
 
 ```php
 use Assegai\Core\Attributes\Injectable;
-use Assegai\Events\Assegai\Outbox\AssegaiOutboxRelayService;
+use Assegai\Events\Bridge\Outbox\AssegaiOutboxRelayService;
 
 #[Injectable]
 final class OutboxDrainService

@@ -48,10 +48,21 @@
       "aliases": [
         "events"
       ],
-      "installer": "Assegai\\Events\\Assegai\\Console\\EventsPackageInstaller"
+      "installer": "Assegai\\Events\\Bridge\\Console\\EventsPackageInstaller"
     }
   },
   "scripts": {
-    "test": "vendor/bin/pest tests"
+    "test": "vendor/bin/pest tests/Standalone",
+    "test:standalone": "@test",
+    "test:assegai": "@php tests/bin/run-optional-suite.php tests/Integration/Assegai 'Assegai\\Core\\Injector' 'Assegai\\Core\\ModuleManager'",
+    "test:outbox": "@php tests/bin/run-optional-suite.php tests/Integration/Outbox 'Assegai\\Core\\Config' 'Assegai\\Orm\\DataSource\\DataSource'",
+    "test:integration": [
+      "@test:assegai",
+      "@test:outbox"
+    ],
+    "test:all": [
+      "@test:standalone",
+      "@test:integration"
+    ]
   }
 }

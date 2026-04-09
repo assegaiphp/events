@@ -7,8 +7,8 @@ use Assegai\Core\Attributes\Modules\Module;
 use Assegai\Core\Consumers\MiddlewareConsumer;
 use Assegai\Core\Enumerations\Scope;
 use Assegai\Core\Interfaces\AssegaiModuleInterface;
-use Assegai\Events\Assegai\AssegaiEventEmitter;
-use Assegai\Events\Assegai\EventsModule;
+use Assegai\Events\Bridge\AssegaiEventEmitter;
+use Assegai\Events\Bridge\EventsModule;
 use Assegai\Events\Attributes\OnEvent;
 
 final class EventsBridgeState
@@ -85,8 +85,8 @@ use Assegai\Core\Injector;
 use Assegai\Core\ModuleManager;
 use Assegai\Core\Routing\Router;
 use Assegai\Core\Runtimes\RuntimeContext;
-use Assegai\Events\Assegai\EventEmitterReadinessWatcherProvider;
-use Assegai\Events\Assegai\EventListenerRegistrar;
+use Assegai\Events\Bridge\EventEmitterReadinessWatcherProvider;
+use Assegai\Events\Bridge\EventListenerRegistrar;
 use Tests\EventsAssegai\EventsBridgeState;
 use Tests\EventsAssegai\EventsTestAppModule;
 use Tests\EventsAssegai\OrderWorkflowService;

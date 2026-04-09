@@ -2,13 +2,12 @@
 
 namespace Tests\EventsOutbox {
 
-use Assegai\Common\Interfaces\Queues\QueueInterface;
-use Assegai\Common\Interfaces\Queues\QueueProcessResultInterface;
+use Assegai\Events\Interfaces\QueuePublisherInterface;
 use Assegai\Core\Config\ProjectConfig;
-use Assegai\Events\Assegai\Outbox\AssegaiOutboxRelayService;
-use Assegai\Events\Assegai\Outbox\ConfiguredQueueConnectionFactory;
-use Assegai\Events\Assegai\Outbox\Entities\OutboxMessageEntity;
-use Assegai\Events\Assegai\Outbox\OrmOutboxStore;
+use Assegai\Events\Bridge\Outbox\AssegaiOutboxRelayService;
+use Assegai\Events\Bridge\Outbox\ConfiguredQueueConnectionFactory;
+use Assegai\Events\Bridge\Outbox\Entities\OutboxMessageEntity;
+use Assegai\Events\Bridge\Outbox\OrmOutboxStore;
 use Assegai\Events\Exceptions\ConfiguredQueueConnectionException;
 use Assegai\Events\Exceptions\OutboxPayloadEncodingException;
 use Assegai\Events\Outbox\OutboxDeliveryStatus;
@@ -19,7 +18,7 @@ use Assegai\Orm\Enumerations\DataSourceType;
 use DateTimeImmutable;
 use Throwable;
 
-final class FakeRelayQueue implements QueueInterface
+final class FakeRelayQueue implements QueuePublisherInterface
 {
   /**
    * @var object[]
@@ -42,52 +41,7 @@ final class FakeRelayQueue implements QueueInterface
     self::$jobs[] = $job;
   }
 
-  public function process(callable $callback): QueueProcessResultInterface
-  {
-    return new class implements QueueProcessResultInterface {
-      public function getData(): mixed
-      {
-        return null;
-      }
-
-      public function isOk(): bool
-      {
-        return true;
-      }
-
-      public function isError(): bool
-      {
-        return false;
-      }
-
-      public function getErrors(): array
-      {
-        return [];
-      }
-
-      public function getNextError(): ?Throwable
-      {
-        return null;
-      }
-
-      public function getJob(): ?object
-      {
-        return null;
-      }
-    };
-  }
-
-  public function getName(): string
-  {
-    return $this->name;
-  }
-
-  public function getTotalJobs(): int
-  {
-    return count(self::$jobs);
-  }
-
-  public static function create(array $config): QueueInterface
+  public static function create(array $config): self
   {
     return new self((string) ($config['name'] ?? 'events'));
   }
@@ -96,10 +50,10 @@ final class FakeRelayQueue implements QueueInterface
 
 namespace {
 
-use Assegai\Events\Assegai\Outbox\AssegaiOutboxRelayService;
-use Assegai\Events\Assegai\Outbox\ConfiguredQueueConnectionFactory;
-use Assegai\Events\Assegai\Outbox\Entities\OutboxMessageEntity;
-use Assegai\Events\Assegai\Outbox\OrmOutboxStore;
+use Assegai\Events\Bridge\Outbox\AssegaiOutboxRelayService;
+use Assegai\Events\Bridge\Outbox\ConfiguredQueueConnectionFactory;
+use Assegai\Events\Bridge\Outbox\Entities\OutboxMessageEntity;
+use Assegai\Events\Bridge\Outbox\OrmOutboxStore;
 use Assegai\Events\Exceptions\ConfiguredQueueConnectionException;
 use Assegai\Events\Exceptions\OutboxPayloadEncodingException;
 use Assegai\Events\Outbox\OutboxDeliveryStatus;
