@@ -24,6 +24,12 @@ It is intentionally framework-light:
 - observe listener failures with failure hooks
 - record durable events into an outbox store when in-process delivery is not enough
 
+## Contribution workflow
+
+For commit and pull request conventions in this repo, see:
+
+- [docs/commit-and-pr-guidelines.md](./docs/commit-and-pr-guidelines.md)
+
 ## Install
 
 ```bash

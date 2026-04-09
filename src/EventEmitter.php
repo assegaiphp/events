@@ -2,6 +2,7 @@
 
 namespace Assegai\Events;
 
+use Assegai\Events\Exceptions\ListenerLimitExceededException;
 use Assegai\Events\Interfaces\EventFailureHandlerInterface;
 use Assegai\Events\Interfaces\EventEmitterInterface;
 use Assegai\Events\Support\EventNameResolver;
@@ -178,11 +179,10 @@ class EventEmitter implements EventEmitterInterface
       return;
     }
 
-    throw new \OverflowException(sprintf(
-      'The event "%s" already has the maximum number of listeners (%d).',
-      $event,
-      $this->config->maxListeners,
-    ));
+    throw new ListenerLimitExceededException(
+      event: $event,
+      maxListeners: $this->config->maxListeners,
+    );
   }
 
   private function matches(string $pattern, string $eventName): bool

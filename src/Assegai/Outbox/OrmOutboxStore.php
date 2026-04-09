@@ -4,6 +4,9 @@ namespace Assegai\Events\Assegai\Outbox;
 
 use Assegai\Core\Attributes\Injectable;
 use Assegai\Events\Assegai\Outbox\Entities\OutboxMessageEntity;
+use Assegai\Events\Exceptions\OutboxAppendFailedException;
+use Assegai\Events\Exceptions\OutboxPayloadDecodingException;
+use Assegai\Events\Exceptions\OutboxPayloadEncodingException;
 use Assegai\Events\Interfaces\DurableOutboxStoreInterface;
 use Assegai\Events\Outbox\OutboxDeliveryStatus;
 use Assegai\Events\Outbox\OutboxMessage;
@@ -13,7 +16,6 @@ use Assegai\Orm\Management\Repository;
 use DateTime;
 use DateTimeImmutable;
 use JsonException;
-use RuntimeException;
 use Throwable;
 
 #[Injectable]
@@ -66,7 +68,7 @@ class OrmOutboxStore implements DurableOutboxStoreInterface
     );
 
     if ($statement === false) {
-      throw new RuntimeException('Failed to append event outbox message.');
+      throw new OutboxAppendFailedException('Failed to append event outbox message.');
     }
   }
 
@@ -185,7 +187,7 @@ class OrmOutboxStore implements DurableOutboxStoreInterface
     try {
       return json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     } catch (JsonException $exception) {
-      throw new RuntimeException('Failed to encode an outbox payload as JSON.', previous: $exception);
+      throw new OutboxPayloadEncodingException('Failed to encode an outbox payload as JSON.', previous: $exception);
     }
   }
 
@@ -194,7 +196,7 @@ class OrmOutboxStore implements DurableOutboxStoreInterface
     try {
       return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
     } catch (JsonException $exception) {
-      throw new RuntimeException('Failed to decode an outbox payload from JSON.', previous: $exception);
+      throw new OutboxPayloadDecodingException('Failed to decode an outbox payload from JSON.', previous: $exception);
     }
   }
 

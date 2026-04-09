@@ -9,6 +9,8 @@ use Assegai\Events\Assegai\Outbox\AssegaiOutboxRelayService;
 use Assegai\Events\Assegai\Outbox\ConfiguredQueueConnectionFactory;
 use Assegai\Events\Assegai\Outbox\Entities\OutboxMessageEntity;
 use Assegai\Events\Assegai\Outbox\OrmOutboxStore;
+use Assegai\Events\Exceptions\ConfiguredQueueConnectionException;
+use Assegai\Events\Exceptions\OutboxPayloadEncodingException;
 use Assegai\Events\Outbox\OutboxDeliveryStatus;
 use Assegai\Events\Outbox\OutboxMessage;
 use Assegai\Orm\DataSource\DataSource;
@@ -98,6 +100,8 @@ use Assegai\Events\Assegai\Outbox\AssegaiOutboxRelayService;
 use Assegai\Events\Assegai\Outbox\ConfiguredQueueConnectionFactory;
 use Assegai\Events\Assegai\Outbox\Entities\OutboxMessageEntity;
 use Assegai\Events\Assegai\Outbox\OrmOutboxStore;
+use Assegai\Events\Exceptions\ConfiguredQueueConnectionException;
+use Assegai\Events\Exceptions\OutboxPayloadEncodingException;
 use Assegai\Events\Outbox\OutboxDeliveryStatus;
 use Assegai\Events\Outbox\OutboxMessage;
 use Assegai\Orm\DataSource\DataSource;
@@ -272,6 +276,24 @@ it('relays persisted outbox rows through the configured queue connection', funct
     ->and(FakeRelayQueue::$jobs[0]->eventName)->toBe('orders.created')
     ->and(FakeRelayQueue::$jobs[0]->payload)->toBe(['orderId' => 12])
     ->and($row['status'])->toBe(OutboxDeliveryStatus::DISPATCHED->value);
+});
+
+it('throws a custom exception when the configured queue path is invalid', function (): void {
+  $factory = new ConfiguredQueueConnectionFactory();
+
+  expect(fn () => $factory->create('invalid-path'))
+    ->toThrow(ConfiguredQueueConnectionException::class, "Invalid queue connection path 'invalid-path'. Expected '<driver>.<name>'.");
+});
+
+it('throws a custom exception when outbox payload encoding fails', function (): void {
+  $store = new OrmOutboxStore($this->repository);
+
+  expect(fn () => $store->append(new OutboxMessage(
+    eventName: 'orders.created',
+    payload: ['broken' => chr(0xB1) . '1'],
+    occurredAt: new DateTimeImmutable('2026-03-26 10:00:00'),
+  )))
+    ->toThrow(OutboxPayloadEncodingException::class, 'Failed to encode an outbox payload as JSON.');
 });
 
 function removeEventsOutboxDirectoryTree(string $path): void

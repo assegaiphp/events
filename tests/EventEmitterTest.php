@@ -2,8 +2,10 @@
 use Assegai\Events\Attributes\OnEvent;
 use Assegai\Events\EventEmitter;
 use Assegai\Events\EventEmitterConfig;
-use Assegai\Events\EventListenerFailure;
 use Assegai\Events\EventEmitterReadinessWatcher;
+use Assegai\Events\EventListenerFailure;
+use Assegai\Events\Exceptions\EventEmitterNotReadyException;
+use Assegai\Events\Exceptions\ListenerLimitExceededException;
 use Assegai\Events\Interfaces\OutboxStoreInterface;
 use Assegai\Events\Outbox\OutboxMessage;
 use Assegai\Events\Outbox\OutboxRecorder;
@@ -185,7 +187,7 @@ it('enforces the configured listener limit', function (): void {
   $emitter->on('orders.created', fn () => null);
 
   expect(fn () => $emitter->on('orders.created', fn () => null))
-    ->toThrow(OverflowException::class);
+    ->toThrow(ListenerLimitExceededException::class);
 });
 
 it('can wait for readiness', function (): void {
@@ -195,6 +197,13 @@ it('can wait for readiness', function (): void {
   $watcher->waitUntilReady(5);
 
   expect($watcher->isReady())->toBeTrue();
+});
+
+it('throws a custom exception when readiness times out', function (): void {
+  $watcher = new EventEmitterReadinessWatcher();
+
+  expect(fn () => $watcher->waitUntilReady(1, 0))
+    ->toThrow(EventEmitterNotReadyException::class, 'The event emitter is not ready yet.');
 });
 
 it('can record durable events into an outbox store', function (): void {
