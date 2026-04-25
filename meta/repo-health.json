@@ -1,7 +1,7 @@
 {
   "repository": "assegaiphp/events",
   "package": "assegaiphp/events",
-  "php": ">=8.3",
+  "php": ">=8.4",
   "license": "MIT",
   "ci": {
     "workflow": "php.yml",
