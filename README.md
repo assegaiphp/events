@@ -44,6 +44,15 @@ For Assegai projects, the CLI shortcut is:
 assegai add events
 ```
 
+## Compatibility
+
+| Events package | AssegaiPHP release line |
+| --- | --- |
+| `0.10.x` | `0.10.x` |
+| `0.9.x` | `0.9.x` |
+
+The standalone event emitter does not require `assegaiphp/common` or `assegaiphp/core`. The release-line mapping applies when the optional AssegaiPHP bridges are used.
+
 The standalone emitter lives under `Assegai\Events\...`. The optional Assegai bridge now lives under `Assegai\Events\Bridge\...`. The older `Assegai\Events\Assegai\...` namespace still works as a compatibility alias, but `Bridge` is the preferred path going forward.
 
 ## Assegai usage
