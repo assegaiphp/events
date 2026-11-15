@@ -35,7 +35,7 @@ For package maintenance, `composer test` exercises the standalone package surfac
 ## Install
 
 ```bash
-composer require assegaiphp/events
+composer require 'assegaiphp/events:~0.11.0'
 ```
 
 For Assegai projects, the CLI shortcut is:
@@ -48,6 +48,7 @@ assegai add events
 
 | Events package | AssegaiPHP release line |
 | --- | --- |
+| `0.11.x` | `0.11.x` |
 | `0.10.x` | `0.10.x` |
 | `0.9.x` | `0.9.x` |
 
